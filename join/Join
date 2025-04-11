@@ -1,0 +1,246 @@
+-- equi join 예제
+
+-- 조인 공통된 컬럼을 활용
+-- 사원 테이블과 부서 테이블을 조인해서 이름과 부서위치를 출력
+-- 두개다 중복되는 컬럼은 emp.deptno 이렇게 앞에 테이블명을 작성홰줘야 한다
+select e.ename,d.loc,e.deptno from emp e, dept d
+where e.deptno = d.deptno;
+
+select e.ename,d.loc from emp e, dept d
+where e.deptno = d.deptno;
+
+-- 직업이 salesman 인 사원들의 이름과 직업과 부서위치를 출력하세요
+select e.ename,e.job,d.loc
+from emp e, dept d
+where e.deptno = d.deptno and e.job="salesman";
+
+where e.deptno = d.deptno => 조인조건  and e.job="salesman"; => 검색조건
+
+-- dallas 에서 근무하는 사원들의 이름과 월급과 부서위치를 출력
+select e.ename,e.sal,d.loc
+from emp e, dept d
+where e.deptno = d.deptno and d.loc = "dallas";
+
+
+
+
+-- non equi join 예제
+
+salgrade 테이블 생성 예제
+
+-- MySQL에서는 DROP TABLE IF EXISTS를 사용하여 테이블이 존재하는 경우 삭제합니다.
+DROP TABLE IF EXISTS salgrade;
+
+-- 테이블 생성
+CREATE TABLE salgrade (
+    grade INT(10),         -- INT 대신 NUMBER에 해당
+    losal INT(10),         -- INT 대신 NUMBER에 해당
+    hisal INT(10)          -- INT 대신 NUMBER에 해당
+);
+
+-- 데이터 삽입
+INSERT INTO salgrade VALUES (1, 700, 1200);
+INSERT INTO salgrade VALUES (2, 1201, 1400);
+INSERT INTO salgrade VALUES (3, 1401, 2000);
+INSERT INTO salgrade VALUES (4, 2001, 3000);
+INSERT INTO salgrade VALUES (5, 3001, 9999);
+
+-- 변경사항 커밋 (MySQL에서는 자동 커밋 모드가 기본 설정이므로 이 부분은 생략 가능)
+COMMIT;
+
+
+
+-- 사원 테이블과 급여 테이블과 조인하여 이름과 월급과 월급에 대한 등급을 출력
+-- emp 테이블과 salgrade테이블은 공통된 컬럼이 없다alter
+-- 이럴때는 비슷한 테이블을 조인한면된다 여기서는 sql과 losal,hisal 사이에 sal값이 존재한다
+-- BETWEEN :BETWEEN은 특정 값이 지정된 두 값의 범위 내에 있는지를 확인하는 데 사용
+select e.ename,e.sal,s.grade
+from emp e , salgrade s
+where e.sal between s.losal and s.hisal;
+
+
+-- 급여등급이 4등급인 사원들의 이름과 월급을 출력하는데 월급이 높은 사원부터 출력
+select e.ename , e.sal
+from emp e, salgrade s
+where e.sal between s.losal and s.hisal and s.grade =4
+order by e.sal desc;
+
+e.sal between s.losal and s.hisal => 조인조건
+and s.grade =4 ; => 검색 조건
+
+
+
+
+-- outer join 예제
+
+RIGHT JOIN:
+
+"부서(dept)를 기준으로" 직원(emp) 정보를 연결합니다.
+
+부서 테이블에 있는 모든 행을 결과에 포함시킵니다.
+
+만약 직원 테이블에 해당 부서에 속하는 직원이 없으면 NULL 값으로 표시됩니다.
+
+ON e.deptno = d.deptno:
+
+직원 테이블(emp)의 deptno(부서 번호)와 부서 테이블(dept)의 deptno(부서 번호)가 일치하는 행을 연결합니다.
+
+즉, 부서 번호가 같은 직원과 부서를 매칭합니다.
+
+SELECT e.ename, d.loc:
+
+직원의 이름(ename)과 부서 위치(loc)를 결과로 보여줍니다.
+
+RIGHT JOIN은 부서 테이블(dept)을 기준으로 데이터를 가져옵니다.
+
+부서 번호가 직원 테이블과 일치하지 않는 경우, 직원 이름(ename)은 NULL로 표시됩니다.
+
+
+-- 이름과 부서위치를 출력하는데 다음과 같이 boston도 출력 emp에 30번까지 밖의 없어서 boston이 출력이 안되기 때문에 rightjoin을 해서 오른쪽으로 기준으로 검색하면된다
+SELECT e.ename, d.loc
+FROM emp e
+RIGHT JOIN dept d ON e.deptno = d.deptno;
+
+
+-- 사원 테이블 전체에 이름과 부서위치를 출력하는데 jack도 출력
+insert into emp (empno,ename,sal,deptno)
+values(7122,'jack',3000,70);
+
+commit;
+
+select * from emp;
+select * from dept;
+
+-- 이거는 기준 테이블(emp)은 왼쪽 테이블이고 emp 테이블의 모든 데이터를 포함 dept테이블에서 연결되지 않는 데이터는 NULL로 표시
+SELECT e.ename, d.loc
+FROM emp e
+LEFT JOIN dept d ON e.deptno = d.deptno;
+
+
+
+
+-- self join 예제 == 자기 자신과 조인
+
+-- 직업이 salesman인 사원들의 사원이름과 직업을 출력하고 관리자 이름과 관리자의 직업을 출력
+/*ON 사원.mgr = 관리자.empno는 사원의 mgr(관리자 번호)과 관리자의 empno(직원 번호)가 일치하는 행을 찾는 조건입니다.
+이를 통해 사원이 속한 관리자를 찾는 관계를 구성*/
+
+SELECT
+    사원.ename AS 사원,
+    사원.job AS 직업,
+    관리자.ename AS 관리자,
+    관리자.job AS 관리자_직업
+FROM emp AS 사원
+JOIN emp AS 관리자 ON 사원.mgr = 관리자.empno;
+
+
+-- 관리자인 사원들보다 더 많은 월급을 받는 사원들의 데이터만 출력
+
+SELECT
+    사원.ename AS 사원,
+    사원.sal AS 사원월급,
+    관리자.ename AS 관리자,
+    관리자.sal AS 관리자_월급
+FROM emp AS 사원
+JOIN emp AS 관리자 ON 사원.mgr = 관리자.empno
+where 사원.sal > 관리자.sal ;
+
+
+
+-- on 절
+
+-- on 절을 사용한 조인문법으로 결과를 출력
+select e.ename,e.sal,e.job,d.loc
+from emp e join dept d
+on (e.deptno = d.deptno) -- 조인조건
+where e.job="salesman"; -- 검색조건
+
+
+-- 월급이 1000에서 3000 사이인 사원들의 이름과 월급과 부서위치를 on절을 사용한 조인 문법으로 출력
+select e.sal,e.ename,d.loc
+from emp e join dept d
+on (e.deptno = d.deptno) -- 조인조건
+where e.sal between 1000 and 3000; -- 검색조건
+
+
+
+-- using 절
+
+-- using 절을 사용한 조인문법으로 결과를 출력
+select e.ename,e.sal,e.job,d.loc
+from emp e join dept d
+using (deptno) -- using을 사용하면 e.deptno = d.deptno 이렇게 된거를 생략하고 공통컬럼만 작성하면 조인 된다
+where e.job = 'salesman';
+
+-- using 절을 사용한 조인문법으로 부서위치가 dallas 인 사원들의 이름과 월급과 부서위치를 출력
+select e.ename,e.sal,d.loc
+from emp e join dept d
+using (deptno) -- 조인조건
+where d.loc = "dallas"; -- 검색조건
+
+
+-- natural join
+
+-- natural join = 공통된 컬럼을 알아서 찾아서 조인 해주는걸 뜻한다
+select e.ename as 이름 , e.job as 직업, e.sal as 월급 , d.loc as 부서위치
+from emp e natural join dept d
+where e.job = "salesman";
+
+-- 직업이 salesman이고 부서번호가 30번인 사원들의 이름과 직업과 월급과 부서위치를 출력
+select e.ename,e.job,e.sal,d.loc
+from emp e natural join dept d
+where e.job = "salesman" and deptno = 30; -- deptno 는 공통 컬럼이기 떄문에 별칭을 빼주는게 맞다
+
+
+
+-- inner join ,left join 차이점
+inner join = 두 테이블 간에서 조건에 맞는 공통된 데이터(교집합)만 반환
+left join = 왼쪽 테이블(기준 테이블)의 모든 데이터와, 오른쪽 테이블에서 조인 조건에 맞는 데이터(있으면 매칭, 없으면 NULL)를 반환합니다
+
+
+
+-- left/right outer join
+
+-- 1999 ansi 조인문법의 outer join으로 결과를 출력
+SELECT e.ename, d.loc
+FROM dept d
+LEFT JOIN emp e ON e.deptno = d.deptno;
+
+-- 사원 테이블에 입력하고 1999 ansi 조인문법을 사용하여 이름과 직업 ,월급과 부서위치를 출력하는데 사원 테이블에 jack도 출력
+insert into emp (empno,ename,sal,job,deptno)values (8282,'jack',3000,'analyst',50);
+
+commit;
+
+select e.ename,e.job, e.sal, d.loc
+from emp e left outer join dept d
+on (e.deptno = d.deptno);
+
+
+
+
+-- 이게 mysql full outer join이다
+-- full outer 조인을 사용하여 jack 도 출력되고 부서위치의 boston도 출력
+SELECT e.ename, e.job, e.sal, d.loc
+FROM emp e
+LEFT JOIN dept d ON e.deptno = d.deptno
+
+UNION
+
+SELECT e.ename, e.job, e.sal, d.loc
+FROM emp e
+RIGHT JOIN dept d ON e.deptno = d.deptno;
+
+
+
+-- 직업이 analyst 이거나 부서위치가 boston인 사원들의 이름과 직업과 월급과 부서위치를 출력하는데 full outer 조인을 사용하여 출력
+SELECT e.ename, e.job, e.sal, d.loc
+from emp e
+left join dept d ON e.deptno = d.deptno
+where e.job ='analyst' or d.loc = 'boston'
+
+UNION
+
+SELECT e.ename, e.job, e.sal, d.loc
+FROM emp e
+RIGHT JOIN dept d ON e.deptno = d.deptno
+where e.job ='analyst' or d.loc = 'boston';
