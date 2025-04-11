@@ -1,0 +1,2 @@
+-- Safe Update Mode를 비활성화 == SET SQL_SAFE_UPDATES = 0;
+--  Safe Update Mode를 활성화 == SQL_SAFE_UPDATES = 1
