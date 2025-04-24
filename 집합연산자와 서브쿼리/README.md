@@ -93,5 +93,83 @@ select ename,job
 from emp
 where job in (select job from emp where deptno =20);
 
+-- 관리자인 사원들의 이름과 월급과 직업을 출력
+select ename
+from emp
+where empno in (select mgr from emp);
 
-13강부터 듣기 
+-- 관리자가 아닌 사원들의 이름과 월급과 직업을 출력 = not in은 null값이 들어가면 조회가 안된다
+select ename
+from emp
+where empno not in (select mgr from emp where mgr is not null);
+
+
+
+-- 서브 쿼리 사용하기 (exists(서브쿼리의 결과가 존재하는지 확인)와 not exists 를 사용하면 메인쿼리가 서브쿼리보다 먼저 실행된다(중요))
+
+-- 부서 테이블에 있는 부서번호중에서 사원 테이블에 존재하는 부서번호에 대한 모든 컬럼을 출력
+select deptno
+from dept d
+where exists (select *
+from emp e where e.deptno = d.deptno);
+
+-- 부서 테이블에 있는 부서번호중에서 사원 테이블에 존재하지 않는 부서번호에 대한 모든 컬럼을 출력
+select deptno
+from dept d
+where not exists (select *
+from emp e where e.deptno = d.deptno);
+
+
+
+
+-- group by 검색조건 having절 사용방법
+
+-- 직업과 직업별 토탈월급을 출력하는데 직업이 salesman인 사원들의 토탈월급보다 더 큰 것만 출력
+SELECT job, SUM(sal)
+FROM emp
+GROUP BY job
+HAVING SUM(sal) > (SELECT SUM(sal) FROM emp WHERE job = 'salesman');
+
+-- 부서번호, 부서번호별 인원수를 출력하는데 10번 부서번호의 인원수보다 더 큰것만 출력
+select deptno, count(*)
+from emp
+group by deptno
+having count(*)> (select count(*) from emp
+where deptno =10);
+
+
+
+-- from 절의 서브 쿼리
+
+-- 사원 테이블에서 월급들 가장 많이 받는 사원의 이름과 월급과 궐급의 순위를 출력
+-- 분석함수는 where 절에 사용을 못한다 = rank() 등
+-- rank() 데이터의 순위를 계산, over 창 함수가 작동할 범위(Window)를 정의하는 역할
+SELECT *
+FROM (
+SELECT ename, sal, RANK() OVER (ORDER BY sal DESC) AS rnk
+FROM emp
+) AS emp_rank
+where rnk =1;
+
+-- 직업이 salesman인 사원들중에서 가장 먼저 입사한 사우너의 이름과 입사일을 출력
+SELECT *
+FROM (
+SELECT ename, hiredate, job, RANK() OVER (ORDER BY hiredate ASC) AS rnk
+FROM emp
+WHERE job = 'salesman'
+) AS emp_hiredate
+where rnk =1;
+
+
+
+-- select 절의 서브 쿼리
+
+-- 직업이 salesman인 사원들의 이름과 월급을 출력하면서 그 옆에 직업이 salesman인 사원들의 최대우러급과 최소월급을 출력
+select ename,sal ,(select max(sal) from emp where job ='salesman') as max1,
+(select min(sal) from emp where job= 'salesman') as min1
+from emp where job='salesman';
+
+-- 부서 번호가 20번인 사원들의 이름과 월급을 출력하고 그 옆에 20번 부서번호인 사원들의 평균월급이 출력
+select ename,sal ,(select avg(sal) from emp where deptno =20) 평균
+from emp
+where deptno =20;
